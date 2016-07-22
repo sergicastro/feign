@@ -171,6 +171,24 @@ public interface Contract {
     /**
      * links a parameter name to its index in the method signature.
      */
+    protected void nameParam(MethodMetadata data, Param param, int i) {
+      Collection<String>
+          names = data.indexToName().containsKey(i) 
+            ? data.indexToName().get(i) : new ArrayList<String>();
+      Collection<Boolean>
+          encodes = data.indexToEncode().containsKey(i) 
+              ? data.indexToEncode().get(i) : new ArrayList<Boolean>();
+      
+      names.add(param.value());
+      encodes.add(param.encode());
+      
+      data.indexToName().put(i, names);
+      data.indexToEncode().put(i, encodes);
+    }
+    
+    /**
+     * links a parameter name to its index in the method signature.
+     */
     protected void nameParam(MethodMetadata data, String name, int i) {
       Collection<String>
           names =
@@ -245,10 +263,11 @@ public interface Contract {
       for (Annotation annotation : annotations) {
         Class<? extends Annotation> annotationType = annotation.annotationType();
         if (annotationType == Param.class) {
-          String name = ((Param) annotation).value();
+          Param param = ((Param) annotation);  
+          String name = param.value();
           checkState(emptyToNull(name) != null, "Param annotation was empty on param %s.",
               paramIndex);
-          nameParam(data, name, paramIndex);
+          nameParam(data, param, paramIndex);
           if (annotationType == Param.class) {
             Class<? extends Param.Expander> expander = ((Param) annotation).expander();
             if (expander != Param.ToStringExpander.class) {

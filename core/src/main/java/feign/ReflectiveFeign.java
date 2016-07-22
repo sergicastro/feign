@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import feign.InvocationHandlerFactory.MethodHandler;
 import feign.Param.Expander;
 import feign.Request.Options;
+import feign.RequestTemplate.PathParam;
 import feign.codec.Decoder;
 import feign.codec.EncodeException;
 import feign.codec.Encoder;
@@ -204,8 +205,15 @@ public class ReflectiveFeign extends Feign {
           if (indexToExpander.containsKey(i)) {
             value = expandElements(indexToExpander.get(i), value);
           }
-          for (String name : entry.getValue()) {
-            varBuilder.put(name, value);
+          Collection<Boolean> encodes = metadata.indexToEncode().containsKey(i) 
+            ? metadata.indexToEncode().get(i) : new ArrayList<Boolean>();
+              
+          Iterator<String> entryIterator = entry.getValue().iterator();
+          Iterator<Boolean> encodeIterator = encodes.iterator();
+          while(entryIterator.hasNext()){
+            String name = entryIterator.next();
+            Boolean encode = encodeIterator.hasNext() ? encodeIterator.next() : true;
+            varBuilder.put(name, new RequestTemplate.PathParam(value, encode));
           }
         }
       }
@@ -310,7 +318,9 @@ public class ReflectiveFeign extends Feign {
       Map<String, Object> formVariables = new LinkedHashMap<String, Object>();
       for (Entry<String, Object> entry : variables.entrySet()) {
         if (metadata.formParams().contains(entry.getKey())) {
-          formVariables.put(entry.getKey(), entry.getValue());
+          Object value = entry.getValue() instanceof PathParam 
+            ? PathParam.class.cast(entry.getValue()).value : entry.getValue(); 
+          formVariables.put(entry.getKey(), value);
         }
       }
       try {

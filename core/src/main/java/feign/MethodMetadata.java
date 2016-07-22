@@ -40,6 +40,8 @@ public final class MethodMetadata implements Serializable {
   private List<String> formParams = new ArrayList<String>();
   private Map<Integer, Collection<String>> indexToName =
       new LinkedHashMap<Integer, Collection<String>>();
+  private Map<Integer, Collection<Boolean>> indexToEncode =
+      new LinkedHashMap<Integer, Collection<Boolean>>();
   private Map<Integer, Class<? extends Expander>> indexToExpanderClass =
       new LinkedHashMap<Integer, Class<? extends Expander>>();
   private transient Map<Integer, Expander> indexToExpander;
@@ -135,6 +137,10 @@ public final class MethodMetadata implements Serializable {
 
   public Map<Integer, Collection<String>> indexToName() {
     return indexToName;
+  }
+  
+  public Map<Integer, Collection<Boolean>> indexToEncode() {
+    return indexToEncode;
   }
 
   /**

@@ -32,6 +32,8 @@ public @interface Param {
    * The name of the template parameter.
    */
   String value();
+  
+  boolean encode() default true;
 
   /**
    * How to expand the value of this parameter, if {@link ToStringExpander} isn't adequate.
@@ -45,7 +47,7 @@ public @interface Param {
      */
     String expand(Object value);
   }
-
+  
   final class ToStringExpander implements Expander {
 
     @Override
@@ -53,4 +55,5 @@ public @interface Param {
       return value.toString();
     }
   }
+  
 }

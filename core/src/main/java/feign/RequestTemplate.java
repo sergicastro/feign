@@ -210,7 +210,9 @@ public final class RequestTemplate implements Serializable {
     replaceQueryValues(unencoded);
     Map<String, String> encoded = new LinkedHashMap<String, String>();
     for (Entry<String, ?> entry : unencoded.entrySet()) {
-      encoded.put(entry.getKey(), urlEncode(String.valueOf(entry.getValue())));
+      String value = entry.getValue() instanceof PathParam && !PathParam.class.cast(entry.getValue()).encode 
+          ? String.valueOf(entry.getValue()) : urlEncode(String.valueOf(entry.getValue()));
+      encoded.put(entry.getKey(), value);
     }
     String resolvedUrl = expand(url.toString(), encoded).replace("+", "%20");
     if (decodeSlash) {
@@ -233,6 +235,23 @@ public final class RequestTemplate implements Serializable {
       body(urlDecode(expand(bodyTemplate, encoded)));
     }
     return this;
+  }
+  
+  public static class PathParam{
+    Object value;
+    boolean encode;
+    
+    public PathParam(Object value, boolean encode)
+    {
+        this.value = value;
+        this.encode = encode;
+    }
+    
+    @Override
+    public String toString()
+    {
+        return String.valueOf(this.value);
+    }
   }
 
   /* roughly analogous to {@code javax.ws.rs.client.Target.request()}. */
@@ -603,17 +622,19 @@ public final class RequestTemplate implements Serializable {
       Collection<String> values = new ArrayList<String>();
       for (String value : entry.getValue()) {
         if (value.indexOf('{') == 0 && value.indexOf('}') == value.length() - 1) {
-          Object variableValue = unencoded.get(value.substring(1, value.length() - 1));
+          Object unencodedValue = unencoded.get(value.substring(1, value.length() - 1));
           // only add non-null expressions
-          if (variableValue == null) {
+          if (unencodedValue == null) {
             continue;
           }
+          Object variableValue=unencodedValue instanceof PathParam ? PathParam.class.cast(unencodedValue).value : unencodedValue;
+          boolean encode = unencodedValue instanceof PathParam ? PathParam.class.cast(unencodedValue).encode : true;
           if (variableValue instanceof Iterable) {
             for (Object val : Iterable.class.cast(variableValue)) {
-              values.add(urlEncode(String.valueOf(val)));
+              values.add(encode ? urlEncode(String.valueOf(val)) : String.valueOf(val));
             }
           } else {
-            values.add(urlEncode(String.valueOf(variableValue)));
+            values.add(encode ? urlEncode(String.valueOf(variableValue)) : String.valueOf(variableValue));
           }
         } else {
           values.add(value);
